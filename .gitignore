@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Ignore openweathermap API key
+application.properties
+!openweathermap.key

@@ -1,6 +1,8 @@
 package com.weather.service;
 
+import com.weather.domain.DateWeather;
 import com.weather.domain.Diary;
+import com.weather.repository.DateWeatherRepository;
 import com.weather.repository.DiaryRepository;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
@@ -8,7 +10,10 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -28,24 +33,53 @@ public class DiaryService {
 
     private final DiaryRepository diaryRepository;
 
+    private final DateWeatherRepository dateWeatherRepository;
+
     @Value("${openweathermap.key}")
     private String apiKey;
 
-    public void createDiary(LocalDate date, String text) {
+    @Transactional
+    @Scheduled(cron = "0 0 1 * * *")
+    public void saveWeatherData() {
+        dateWeatherRepository.save(getWeatherFromApi());
+    }
+
+    private DateWeather getWeatherFromApi() {
         String weatherString = getWeatherString();
 
         Map<String, Object> parseWeather = parseWeather(weatherString);
 
+        DateWeather dateWeather = new DateWeather();
+        dateWeather.setDate(LocalDate.now());
+        dateWeather.setWeather(parseWeather.get("main").toString());
+        dateWeather.setIcon(parseWeather.get("icon").toString());
+        dateWeather.setTemperature((Double) parseWeather.get("temp"));
+
+        return dateWeather;
+    }
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public void createDiary(LocalDate date, String text) {
+        DateWeather dateWeather = getDateWeather(date);
+
+
         Diary diary = new Diary();
-        diary.setWeather(parseWeather.get("main").toString());
-        diary.setIcon(parseWeather.get("icon").toString());
-        diary.setTemperature((Double) parseWeather.get("temp"));
+        diary.setDateWeather(dateWeather);
         diary.setText(text);
-        diary.setDate(date);
 
         diaryRepository.save(diary);
     }
 
+    private DateWeather getDateWeather(LocalDate date) {
+        List<DateWeather> dateWeathers = dateWeatherRepository.findAllByDate(date);
+
+        if (dateWeathers.size() == 0) {
+            return getWeatherFromApi();
+        } else {
+            return dateWeathers.get(0);
+        }
+
+    }
     private String getWeatherString() {
         String apiUrl = "https://api.openweathermap.org/data/2.5/weather?q=seoul&appid=" + apiKey;
         System.out.println("apiUrl = " + apiUrl);

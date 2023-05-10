@@ -23,4 +23,11 @@ public class Diary {
     private Double temperature;
     private String text;
     private LocalDate date;
+
+    public void setDateWeather(DateWeather dateWeather) {
+        date = dateWeather.getDate();
+        weather = dateWeather.getWeather();
+        temperature = dateWeather.getTemperature();
+        icon = dateWeather.getIcon();
+    }
 }
