@@ -1,5 +1,6 @@
 package com.weather.service;
 
+import com.weather.WeatherApplication;
 import com.weather.domain.DateWeather;
 import com.weather.domain.Diary;
 import com.weather.repository.DateWeatherRepository;
@@ -9,6 +10,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -25,7 +28,6 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +37,7 @@ public class DiaryService {
 
     private final DateWeatherRepository dateWeatherRepository;
 
+    private static final Logger logger = LoggerFactory.getLogger(WeatherApplication.class);
     @Value("${openweathermap.key}")
     private String apiKey;
 
@@ -60,6 +63,7 @@ public class DiaryService {
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public void createDiary(LocalDate date, String text) {
+        logger.info("started to create diary");
         DateWeather dateWeather = getDateWeather(date);
 
 
@@ -68,6 +72,8 @@ public class DiaryService {
         diary.setText(text);
 
         diaryRepository.save(diary);
+        logger.info("end to create diary");
+
     }
 
     private DateWeather getDateWeather(LocalDate date) {

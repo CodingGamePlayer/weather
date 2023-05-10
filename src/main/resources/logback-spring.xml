@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- 로그 출력 포맷 지정 -->
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{15} - %msg%n"/>
+
+    <!-- 콘솔 출력에 대한 Appender 설정 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %cyan(%logger{15}) - %msg%n%throwable</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 파일 출력에 대한 Appender 설정 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${user.dir}/logs/my-app.log</file> <!-- 파일 경로 설정 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>/var/log/my-app/my-app-%d{yyyy-MM-dd}.log.gz</fileNamePattern> <!-- 파일 이름 패턴 설정 -->
+            <maxHistory>30</maxHistory> <!-- 최대 보관 일수 설정 -->
+            <totalSizeCap>1GB</totalSizeCap> <!-- 파일 최대 크기 설정 -->
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- error 로그 출력에 대한 Appender 설정 -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${user.dir}/logs/my-app-error.log</file> <!-- 파일 경로 설정 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>/var/log/my-app/my-app-error-%d{yyyy-MM-dd}.log.gz</fileNamePattern> <!-- 파일 이름 패턴 설정 -->
+            <maxHistory>30</maxHistory> <!-- 최대 보관 일수 설정 -->
+            <totalSizeCap>1GB</totalSizeCap> <!-- 파일 최대 크기 설정 -->
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level> <!-- error 로그만 출력하도록 필터링 -->
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 로그 출력 레벨 설정 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+    <!-- error 로그 출력에 대한 로거 설정 -->
+    <logger name="com.example.myapp" level="ERROR">
+        <appender-ref ref="ERROR_FILE"/>
+    </logger>
+
+</configuration>
